@@ -1,0 +1,17 @@
+% !TEX root = ../my-thesis.tex
+%
+\IfLanguageName{english}{\pdfbookmark[0]{Abstract}{Abstract}}{\pdfbookmark[0]{Zusammenfassung}{Zusammenfassung}}
+\IfLanguageName{english}{\addchap*{Abstract}}{\addchap*{Zusammenfassung}}
+\label{sec:abstract}
+
+\blindtext
+
+\IfLanguageName{english}{
+\vspace*{20mm}
+
+{\usekomafont{chapter}Abstract (german)}
+\label{sec:abstract-diff}
+
+\blindtext
+}
+{}

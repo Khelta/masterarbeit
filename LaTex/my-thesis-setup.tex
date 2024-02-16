@@ -1,0 +1,89 @@
+% !TEX root = my-thesis.tex
+
+
+% **************************************************
+% Files' Character Encoding
+% **************************************************
+\PassOptionsToPackage{utf8}{inputenc}
+\usepackage{inputenc} 
+
+
+% **************************************************
+% Information and Commands for Reuse
+% **************************************************
+\newcommand{\thesisTitle}{The Clean Thesis Style}
+\newcommand{\thesisName}{Ricardo Langner}
+\newcommand{\thesisBirthplace}{Mainz}
+% Options: Bachelorarbeit, Masterarbeit, Bachelor thesis, Master thesis, Dissertation. 
+% Dissertation has different titlepage than others
+\newcommand{\thesisSubject}{Documentation}  
+\newcommand{\thesisDate}{July 27, 2023}
+\newcommand{\thesisVersion}{CleanThesis 0.4.1 - JGU patches}
+
+\newcommand{\thesisFirstReviewer}{Jane Doe}
+\newcommand{\thesisFirstReviewerUniversity}{\protect{Johannes Gutenberg University Mainz}}
+\newcommand{\thesisFirstReviewerDepartment}{Institute of Computer Science - Working Group}
+
+\newcommand{\thesisSecondReviewer}{John Doe}
+\newcommand{\thesisSecondReviewerUniversity}{\protect{Clean Thesis Style University}}
+\newcommand{\thesisSecondReviewerDepartment}{Department of Clean Thesis Style}
+
+\newcommand{\thesisFirstSupervisor}{Jane Doe}
+\newcommand{\thesisSecondSupervisor}{John Smith}
+
+\newcommand{\thesisUniversity}{\protect{Johannes Gutenberg University Mainz}} 
+\newcommand{\thesisUniversityDepartment}{FB08}
+\newcommand{\thesisUniversityDepartmentLong}{Faculty of Physics, Mathematics, and Computer Science}
+\newcommand{\thesisUniversityInstitute}{Institute of Computer Science}
+\newcommand{\thesisUniversityGroup}{Research Group}
+\newcommand{\thesisUniversityCity}{Mainz}
+\newcommand{\thesisUniversityStreetAddress}{Staudingerweg 9}
+\newcommand{\thesisUniversityPostalCode}{55128}
+
+
+% **************************************************
+% Debug LaTeX Information
+% **************************************************
+%\listfiles
+
+
+% **************************************************
+% Load and Configure Packages
+% **************************************************
+\usepackage[english]{babel} % babel system, adjust the language of the content
+\PassOptionsToPackage{% setup clean thesis style
+    figuresep=colon,%
+    hangfigurecaption=false,%
+    hangsection=true,%
+    hangsubsection=true,%
+    sansserif=false,%
+    configurelistings=true,%
+    colorize=full,%
+    colortheme=jgured,%
+    configurebiblatex=true,%
+    bibsys=biber,%
+    bibfile=bib-refs,%
+    bibstyle=numeric,%
+    bibsorting=nty,%
+}{cleanthesis}
+\usepackage{cleanthesis}
+
+\hypersetup{% setup the hyperref-package options
+    pdftitle={\thesisTitle},    %   - title (PDF meta)
+    pdfsubject={\thesisSubject},%   - subject (PDF meta)
+    pdfauthor={\thesisName},    %   - author (PDF meta)
+    plainpages=false,           %   -
+    colorlinks=false,           %   - colorize links?
+    pdfborder={0 0 0},          %   -
+    breaklinks=true,            %   - allow line break inside links
+    bookmarksnumbered=true,     %
+    bookmarksopen=true          %
+}
+
+% **************************************************
+% Other Packages
+% **************************************************
+\usepackage{scrhack}
+\usepackage{csquotes}  % for quotation marks with "foreingquote" in titlepage
+\usepackage{iflang}  % for language switchcase in titlepage
+\usepackage{tikz}

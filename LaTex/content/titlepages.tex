@@ -1,0 +1,114 @@
+% !TEX root = ../my-thesis.tex
+%
+% ------------------------------------  --> cover title page
+\begin{titlepage}
+	\pdfbookmark[0]{Cover}{Cover}
+	\flushright
+	\hfill
+	\vfill
+	{\LARGE\thesisTitle \par}
+	\rule[5pt]{\textwidth}{.4pt} \par
+	{\Large\thesisName}
+	\vfill
+	\textit{\large\thesisDate} \\
+	Version: \thesisVersion
+\end{titlepage}
+
+
+% ------------------------------------  --> main title page
+\begin{titlepage}
+    
+    % Titlepage Header
+    \IfLanguageName{english}{\pdfbookmark[0]{Titlepage}{Titlepage}}{\pdfbookmark[0]{Titelseite}{Titelseite}}
+    \tgherosfont
+    \centering
+
+    \begin{tabularx}{\textwidth}{m{8cm}m{3mm}m{1.3cm}}
+        \IfLanguageName{english}{\includegraphics[height=2.2cm]{gfx/IFI_TEXT_COLOR_EN}}{\includegraphics[height=2.2cm]{gfx/IFI_TEXT_COLOR_DE}} & \tikz\draw[thick,ctcolorgray] (0,0) -- (0,2.2cm); & \includegraphics[height=1.6cm]{gfx/jgu_logo_kasten}
+    \end{tabularx}
+    \vfill
+    
+
+    \ifthenelse{\equal{\thesisSubject}{Dissertation}}{
+        %% Titlepage Dissertation
+        {\LARGE \color{ctcolortitle}\textbf{\thesisTitle} \\[10mm]}
+    
+        {\large \thesisSubject} \\[5mm]
+        \IfLanguageName{english}{submitted for the award of the title}{zur Erlangung des Grades} \\[8mm]
+        {\large\IfLanguageName{english}{\enquote{Doctor of Natural Sciences}}{\setquotestyle[quotes]{german}\foreignquote{german}{Doktor der Naturwissenschaften}}} \\[8mm]
+        \IfLanguageName{english}{to the \thesisUniversityDepartmentLong}{am \thesisUniversityDepartmentLong}\\
+        \IfLanguageName{english}{of \thesisUniversity}{der \thesisUniversity}\\
+        in \thesisUniversityCity
+
+        \vfill
+        {\Large \thesisName} \\[2mm]
+        \IfLanguageName{english}{Born in}{geb. in} \thesisBirthplace \\
+    
+        \vfill
+        \thesisUniversityCity,\IfLanguageName{english}{ }{ den }\thesisDate \\
+
+    }{
+        %% Titlepage Bachelor- or Masterthesis
+        \textsf{\thesisUniversity} \\
+        \textsf{\thesisUniversityDepartment} \\
+        \textsf{\thesisUniversityInstitute} \\
+        \textsf{\thesisUniversityGroup} \\
+    
+        \vfill
+        {\large \thesisSubject} \\[5mm]
+        {\LARGE \color{ctcolortitle}\textbf{\thesisTitle} \\[10mm]}
+        {\Large \thesisName} \\
+    
+        \vfill
+        \begin{minipage}[t]{.27\textwidth}
+            \raggedleft
+            \IfLanguageName{english}{\textit{1. Reviewer}}{\textit{1. Gutachter}}
+        \end{minipage}
+        \hspace*{15pt}
+        \begin{minipage}[t]{.65\textwidth}
+            {\Large \thesisFirstReviewer} \\
+            {\small \thesisFirstReviewerDepartment} \\[-1mm]
+            {\small \thesisFirstReviewerUniversity}
+        \end{minipage} \\[5mm]
+        \begin{minipage}[t]{.27\textwidth}
+            \raggedleft
+            \IfLanguageName{english}{\textit{2. Reviewer}}{\textit{2. Gutachter}}
+        \end{minipage}
+        \hspace*{15pt}
+        \begin{minipage}[t]{.65\textwidth}
+            {\Large \thesisSecondReviewer} \\
+            {\small \thesisSecondReviewerDepartment} \\[-1mm]
+            {\small \thesisSecondReviewerUniversity}
+        \end{minipage} \\[10mm]
+        \begin{minipage}[t]{.27\textwidth}
+            \raggedleft
+            \IfLanguageName{english}{\textit{Supervisors}}{\textit{Betreuer}}
+        \end{minipage}
+        \hspace*{15pt}
+        \begin{minipage}[t]{.65\textwidth}
+            \thesisFirstSupervisor\ \thesisAnd\ \thesisSecondSupervisor
+        \end{minipage} \\[10mm]
+    
+        \thesisDate \\
+    }
+
+\end{titlepage}
+
+
+% ------------------------------------  --> lower title back for single page layout
+\hfill
+\vfill
+{
+	\small
+	\textbf{\thesisName} \\
+	\textit{\thesisTitle} \\
+	\thesisSubject, \thesisDate \\
+	\IfLanguageName{english}{Reviewers}{Gutachter}: \thesisFirstReviewer \thesisAnd\ \thesisSecondReviewer
+	\ifthenelse{\equal{\thesisSubject}{Dissertation}}{}{ \\ \IfLanguageName{english}{Supervisors}{Betreuer}: \thesisFirstSupervisor\ \thesisAnd\ \thesisSecondSupervisor} \\[1.5em]
+	\textbf{\thesisUniversity} \\
+	\textit{\thesisUniversityGroup} \\
+	\thesisUniversityInstitute \\
+	\thesisUniversityDepartment \\
+	\thesisUniversityStreetAddress \\
+	\thesisUniversityPostalCode\ \thesisUniversityCity
+}
