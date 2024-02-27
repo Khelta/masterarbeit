@@ -1,3 +1,6 @@
+.venv
+
+### LaTex
 ## Core latex/pdflatex auxiliary files:
 *.aux
 *.lof
