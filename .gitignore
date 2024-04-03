@@ -1,4 +1,6 @@
 .venv
+code/pytorch/data/*
+.ipynb_checkpoints
 
 ### LaTex
 ## Core latex/pdflatex auxiliary files:
