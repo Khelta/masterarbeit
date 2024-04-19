@@ -1,4 +1,5 @@
 .venv/
+.wslvenv/
 code/pytorch/data/*
 .ipynb_checkpoints
 
