@@ -1,7 +1,12 @@
 .venv/
+.tfvenv/
 .wslvenv/
 code/pytorch/data/*
 .ipynb_checkpoints
+results/
+old/
+__pycache__
+E3Outlier
 
 ### LaTex
 ## Core latex/pdflatex auxiliary files:
