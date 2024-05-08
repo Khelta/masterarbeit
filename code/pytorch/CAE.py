@@ -50,7 +50,7 @@ def prepare_mnist(selected_label, p):
 def train_cae_my(train_loader, model, criterion, optimizer, epochs, train_loss_percent, device):
     for epoch in range(num_epochs):
         imgs = []
-        for (img, _) in train_loader:
+        for (batch, _) in train_loader:
             for img in batch:
                 img = img.to(device)
                 img = img.unsqueeze(0)
@@ -171,7 +171,7 @@ def complete_run_cae(file_prefix, selected_label=9, p=0.05, train_loss_percent=0
 
 
 if __name__ == "__main__": 
-    pnum = 100
+    pnum = 101
     #for pnum in range(200, 205):
     prefix_num = pnum
     num_epochs = 250
