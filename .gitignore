@@ -7,6 +7,7 @@ results/
 old/
 __pycache__
 E3Outlier
+data/mnist/*
 
 ### LaTex
 ## Core latex/pdflatex auxiliary files:

@@ -6,11 +6,11 @@ from sklearn import metrics
 
 absolute_path = os.path.dirname(__file__)
 
-def collect_normal(file_path, result_suffix, column_name):
+def collect_normal(file_prefix, file_path, result_suffix, column_name):
     results_train = {}
     results_test = {}
     
-    file_path = os.path.join(absolute_path, "./results/" + file_path)
+    file_path = os.path.join(absolute_path, "./results/" + file_prefix + file_path)
     for filename in os.listdir(file_path):
         f = os.path.join(file_path, filename)
 
@@ -48,16 +48,16 @@ def collect_normal(file_path, result_suffix, column_name):
         result = pd.DataFrame(column_values, index=indices, columns=[column_name]) 
         return result
 
-    train_path = os.path.join(absolute_path, "./results/train-"+str(result_suffix)+".csv")
-    test_path = os.path.join(absolute_path, "./results/test-"+str(result_suffix)+".csv")
+    train_path = os.path.join(absolute_path, "./results/"+file_prefix+"train-"+str(result_suffix)+".csv")
+    test_path = os.path.join(absolute_path, "./results/"+file_prefix+"test-"+str(result_suffix)+".csv")
     df_train = create_df(results_train).to_csv(train_path)
     df_test = create_df(results_test).to_csv(test_path)
     
-def collect_single_my(file_path, result_suffix):
+def collect_single_my(file_prefix, file_path, result_suffix):
     results_train = {}
     results_test = {}
     
-    file_path = os.path.join(absolute_path, "./results/" + file_path)
+    file_path = os.path.join(absolute_path, "./results/" + file_prefix + file_path)
     for filename in os.listdir(file_path):
         f = os.path.join(file_path, filename)
 
@@ -86,12 +86,12 @@ def collect_single_my(file_path, result_suffix):
             df.at[actual_label, train_loss_percent] = value
         return df
 
-    train_path = os.path.join(absolute_path, "./results/train-"+str(result_suffix)+".csv")
-    test_path = os.path.join(absolute_path, "./results/test-"+str(result_suffix)+".csv")
+    train_path = os.path.join(absolute_path, "./results/"+file_prefix+"train-"+str(result_suffix)+".csv")
+    test_path = os.path.join(absolute_path, "./results/"+file_prefix+"test-"+str(result_suffix)+".csv")
     df_train = create_df(results_train).to_csv(train_path)
     df_test = create_df(results_test).to_csv(test_path)
     
-def collect_single_run_my(file_paths, result_suffix):
+def collect_single_run_my(file_prefix, file_paths, result_suffix):
     
     def run(prefix):
         count = len(file_paths)
@@ -120,41 +120,44 @@ def collect_single_run_my(file_paths, result_suffix):
             df.loc["mean std", column] = stds[column].mean()
         return df
     
-    train_path = os.path.join(absolute_path, "./results/train-" + result_suffix + ".csv")
-    test_path = os.path.join(absolute_path, "./results/test-" + result_suffix + ".csv")
-    df_train = run("train-").to_csv(train_path)
-    df_test = run("test-").to_csv(test_path)
+    train_path = os.path.join(absolute_path, "./results/"+file_prefix+"train-" + result_suffix + ".csv")
+    test_path = os.path.join(absolute_path, "./results/"+file_prefix+"test-" + result_suffix + ".csv")
+    df_train = run(file_prefix + "train-").to_csv(train_path)
+    df_test = run(file_prefix + "test-").to_csv(test_path)
     
-def collect_all_results(names, prefix=""):
+def collect_all_results(file_prefix, names):
     train = ["train-"+name+"-complete.csv" for name in names]
     test = ["test-"+name+"-complete.csv" for name in names]
     
-    train = [pd.read_csv(os.path.join(absolute_path, "./results/"+name)) for name in train]
+    train = [pd.read_csv(os.path.join(absolute_path, "./results/"+file_prefix+name)) for name in train]
     for i in range(1, len(train)):
         train[i] = train[i].drop(columns=["Unnamed: 0"])
     result = pd.concat(train, axis=1)
     result.set_index("Unnamed: 0", inplace=True)
     
-    result.to_excel("train-ALL.xlsx")
+    result.to_excel(os.path.join(absolute_path, "./results/" + file_prefix + "train-ALL.xlsx"))
     
-    test = [pd.read_csv(os.path.join(absolute_path, "./results/"+name)) for name in test]
+    test = [pd.read_csv(os.path.join(absolute_path, "./results/"+file_prefix+name)) for name in test]
     for i in range(1, len(test)):
         test[i] = test[i].drop(columns=["Unnamed: 0"])
     result = pd.concat(test, axis=1)
     result.set_index("Unnamed: 0", inplace=True)
     
-    result.to_excel("test-ALL.xlsx")
+    result.to_excel(os.path.join(absolute_path, "./results/" + file_prefix + "test-ALL.xlsx"))
     
     
-    
-collect_normal("DRAE", "DRAE-complete", "DRAE")
-collect_normal("CAE", "CAE-complete", "CAE")
+range_start = 100
+range_end = 105
+file_prefix = "250-Epochs/0.25/"
 
-for i in range(1, 6):
-    collect_single_my(str(i), "myCAE-"+str(i))
+collect_normal(file_prefix, "DRAE", "DRAE-complete", "DRAE")
+collect_normal(file_prefix, "CAE", "CAE-complete", "CAE")
+
+for i in range(range_start, range_end):
+    collect_single_my(file_prefix, str(i), "myCAE-"+str(i))
     
-file_paths = ["myCAE-"+ str(i) + ".csv" for i in range(1,6)]
-collect_single_run_my(file_paths, "myCAE-complete")
+file_paths = ["myCAE-"+ str(i) + ".csv" for i in range(range_start,range_end)]
+collect_single_run_my(file_prefix, file_paths, "myCAE-complete")
 
 names = ["myCAE", "CAE", "DRAE"]
-collect_all_results(names)
+collect_all_results(file_prefix, names)
