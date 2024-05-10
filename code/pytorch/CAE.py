@@ -9,6 +9,8 @@ from sklearn import metrics
 import pandas as pd
 import os
 
+import multiprocessing
+
 from models.cae_pytorch import CAE_pytorch
 
 absolute_path = os.path.dirname(__file__)
@@ -41,30 +43,47 @@ def prepare_mnist(selected_label, p):
     print("Len Test:", len(test_data))
 
     # Create a DataLoader to iterate through the filtered dataset
-    batch_size = 64
-    train_loader = torch.utils.data.DataLoader(filtered_dataset, batch_size=batch_size, shuffle=True)
-    test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=True)
+    batch_size = 1024
+    train_loader = torch.utils.data.DataLoader(filtered_dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
+    test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=True, pin_memory=True)
     
     return train_loader, test_loader
 
+
+
 def train_cae_my(train_loader, model, criterion, optimizer, epochs, train_loss_percent, device):
+    
+    def f(batch):
+        result = []
+        for img in batch:
+            img = img.unsqueeze(0).unsqueeze(0)
+            recon = model(img)
+            loss = criterion(recon, img)
+            result.append((img, loss))
+        return result
+    
     for epoch in range(num_epochs):
         imgs = []
-        for (batch, _) in train_loader:
-            for img in batch:
-                img = img.to(device)
-                img = img.unsqueeze(0)
-                recon = model(img)
-                loss = criterion(recon, img)
-                imgs.append((img, loss))
 
-        imgs.sort(key=lambda x: x[1])
+        num_processes = 4
+        processes = []
+        imgs = []
+        for (batch, _) in train_loader:
+            batch = batch.to(device)
+            with multiprocessing.pool.ThreadPool(num_processes) as p:
+                result = p.map(f, batch)
+            imgs += result
+            
+        #print(len(results))
+    
+        imgs.sort(key=lambda x: x[0][1])
         l = int(train_loss_percent * len(imgs))
         imgs = imgs[:l]
 
         optimizer.zero_grad()
 
-        for (img, _) in imgs:
+        for data in imgs:
+            img = data[0][0]
             recon = model(img)
             loss = criterion(recon, img)
             
@@ -171,10 +190,10 @@ def complete_run_cae(file_prefix, selected_label=9, p=0.05, train_loss_percent=0
 
 
 if __name__ == "__main__": 
-    pnum = 101
+    pnum = 102
     #for pnum in range(200, 205):
     prefix_num = pnum
-    num_epochs = 250
+    num_epochs = 30
     p = 0.25
 
     train_file_name = "results/train-{}.csv".format(prefix_num)
