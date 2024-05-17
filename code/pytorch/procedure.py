@@ -1,0 +1,81 @@
+import os
+import pandas as pd
+import torch
+import torch.nn as nn
+
+from algorithms import train_cae_my, train_cae_my_soft, train_cae_single
+from datasets import prepare_data
+from models.cae_pytorch import CAE_pytorch
+from constants import VALID_ALGORITHMS, VALID_DATASETS
+
+absolute_path = os.path.dirname(__file__)
+
+def complete_run_cae(dataset, algorithm, file_prefix, selected_label=9, cop=0.05, ap=0.5, num_epochs=30):
+    if algorithm not in VALID_ALGORITHMS:
+        raise ValueError("Algoritm must be in " + str(VALID_ALGORITHMS))
+    
+    if dataset not in VALID_DATASETS:
+        raise ValueError("Algoritm must be in " + str(VALID_DATASETS))
+        
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    
+    model = CAE_pytorch(in_channels=1)
+    model = model.to(device)
+
+    criterion = nn.MSELoss()
+    optimizer = torch.optim.Adam(model.parameters(),eps=1e-7, weight_decay=0.0005)
+    
+    train_loader, test_loader = prepare_data(dataset, selected_label, ap)
+    
+    if algorithm == "CAE":
+        train_cae_single(train_loader, model, criterion, optimizer, epochs=num_epochs, device=device)
+    elif algorithm == "myCAE":
+        train_cae_my(train_loader, model, criterion, optimizer, epochs=num_epochs, ap=ap, device=device)
+    elif algorithm == "myCAEsoft":
+        train_cae_my_soft(train_loader, model, criterion, optimizer, epochs=num_epochs, ap=ap, device=device)
+
+    
+    def calculate_losses(loader, device):
+        normal = []
+        anomalie = []
+        anomalie_label = []
+        for (img, label) in loader:
+            img = img.to(device)
+            recon = model(img)
+            for i in range(0, len(img)):
+                loss = criterion(recon[i], img[i])
+                if label[i].item() == selected_label:
+                    normal.append(loss)
+                else:
+                    anomalie.append(loss)
+                    anomalie_label.append(label[i].item())
+                
+        normal = [round(tensor.tolist(),5) for tensor in normal]
+        anomalie = [round(tensor.tolist(),5) for tensor in anomalie]
+        return normal, anomalie, anomalie_label
+
+    normal_train, anomalie_train, anomalie_label_train = calculate_losses(train_loader, device)
+    normal_test, anomalie_test, anomalie_label_test = calculate_losses(test_loader, device)
+
+    """
+    min_loss = min((min(normal_train),min(anomalie_train)))
+    max_loss = max((max(normal_train),max(anomalie_train)))
+    print(min_loss, max_loss)
+    """
+    
+
+    p = normal_train + anomalie_train
+    df = pd.DataFrame({'Loss': p, 
+                       'Label': [selected_label]*len(normal_train) + anomalie_label_train}).sort_values(by="Loss")
+    path = os.path.join(absolute_path, str(file_prefix)+"-train-loss.csv")
+    df.to_csv(path)
+
+    p = normal_test + anomalie_test
+    df = pd.DataFrame({'Loss': p, 
+                       'Label': [selected_label]*len(normal_test) + anomalie_label_test}).sort_values(by="Loss")
+    path = os.path.join(absolute_path, str(file_prefix)+"-test-loss.csv")
+    df.to_csv(path)
+
+    return
+
+#complete_run_cae("mnist", "myCAE", 1000, num_epochs=1, ap=0.25)
