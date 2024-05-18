@@ -16,7 +16,7 @@ from models.cae_pytorch import CAE_pytorch
 absolute_path = os.path.dirname(__file__)
 
 
-def train_cae_my(train_loader, model, criterion, optimizer, epochs, ap, device):
+def train_cae_my(train_loader, model, criterion, optimizer, epochs, ap, device, histopath=''):
     def f(batch):
         result = []
         for img in batch:
@@ -53,6 +53,8 @@ def train_cae_my(train_loader, model, criterion, optimizer, epochs, ap, device):
             loss.backward()
             optimizer.step()
 
+        if len(histopath) > 0:
+            torch.save(model.state_dict(), histopath+"-e"+str(epoch+1)+".pt")
         print(f'Epoch:{epoch+1}, Loss:{loss.item():.4f}')
     
     return None
