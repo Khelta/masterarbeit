@@ -5,7 +5,7 @@ from torchvision import datasets, transforms
 
 absolute_path = os.path.dirname(__file__)
 
-def prepare_data(dataset, selected_label, ap, batch_size=64):
+def prepare_data(dataset, selected_label, ap, batch_size=1024):
     transform = transforms.ToTensor()
     
     possible_datasets = ["mnist", "fashion", "svhn", "cifar10", "cifar100"]
@@ -24,8 +24,8 @@ def prepare_data(dataset, selected_label, ap, batch_size=64):
         train_data = datasets.CIFAR100(root=os.path.join(absolute_path, './data'), train=True, download=True, transform=transform)
         test_data = datasets.CIFAR100(root=os.path.join(absolute_path, './data'), train=False, download=True, transform=transform)
     else:
-        train_data = datasets.SVHN(root=os.path.join(absolute_path, './data'), train=True, download=True, transform=transform)
-        test_data = datasets.SVHN(root=os.path.join(absolute_path, './data'), train=False, download=True, transform=transform)
+        train_data = datasets.SVHN(root=os.path.join(absolute_path, './data'), download=True, transform=transform)
+        test_data = None
     return create_loader(train_data, test_data, selected_label, ap, batch_size)
     
 
@@ -47,11 +47,18 @@ def create_loader(train_data, test_data, selected_label, ap, batch_size=64):
     # Create a Subset of the original dataset with the selected indices
     filtered_dataset = torch.utils.data.Subset(train_data, selected_indices_train)
 
-    print("Num Normal", num_label_normal,"Len Train:", len(filtered_dataset), "Len Test:", len(test_data))
+    pstring = "Num Normal " + str(num_label_normal) + " Len Train: " + str(len(filtered_dataset))
+    if test_data is not None: 
+        pstring += " Len Test:" + str(len(test_data))
+
+    print(pstring)
 
     # Create a DataLoader to iterate through the filtered dataset
     train_loader = torch.utils.data.DataLoader(filtered_dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
-    test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=True, pin_memory=True)
+    if test_data is not None:
+        test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size, shuffle=True, pin_memory=True)
+    else:
+        test_loader = None
     
     return train_loader, test_loader
 

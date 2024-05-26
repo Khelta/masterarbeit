@@ -10,17 +10,18 @@ import pandas as pd
 import os
 import multiprocessing
 
-from models.cae_pytorch import CAE_pytorch
+from models.cae_pytorch import CAE_28
+from constants import DATASETS_IN_CHANNELS
 
 
 absolute_path = os.path.dirname(__file__)
 
 
-def train_cae_my(train_loader, model, criterion, optimizer, epochs, ap, device, histopath=''):
+def train_cae_my(train_loader, model, criterion, optimizer, epochs, ap, device, histopath='', dataset="mnist"):
     def f(batch):
         result = []
         for img in batch:
-            img = img.unsqueeze(0).unsqueeze(0)
+            img = img.unsqueeze(0)
             recon = model(img)
             loss = criterion(recon, img)
             result.append((img, loss))
@@ -29,23 +30,23 @@ def train_cae_my(train_loader, model, criterion, optimizer, epochs, ap, device, 
     for epoch in range(epochs):
         imgs = []
         num_processes = 4
-        processes = []
         imgs = []
         for (batch, _) in train_loader:
             batch = batch.to(device)
-            with multiprocessing.pool.ThreadPool(num_processes) as p:
-                result = p.map(f, batch)
+            result = f(batch)
+            """with multiprocessing.pool.ThreadPool(num_processes) as p:
+                result = p.map(f, batch)"""
             imgs += result
         
         #print(len(results))
     
-        imgs.sort(key=lambda x: x[0][1])
+        imgs.sort(key=lambda x: x[1])
         l = int(ap * len(imgs))
         imgs = imgs[:l]
         optimizer.zero_grad()
 
         for data in imgs:
-            img = data[0][0]
+            img = data[0]
             recon = model(img)
             loss = criterion(recon, img)
 
@@ -105,7 +106,7 @@ def train_cae_my_soft(train_loader, model, criterion, optimizer, epochs, ap, dev
     return None
 
 
-def train_cae_single(train_loader, model, criterion, optimizer, epochs, device):
+def train_cae_single(train_loader, model, criterion, optimizer, epochs, device, histopath=''):
     model = model.to(device)
     for epoch in range(epochs):
         for data in train_loader:
@@ -118,5 +119,7 @@ def train_cae_single(train_loader, model, criterion, optimizer, epochs, device):
                 loss = criterion(output, img)
                 loss.backward()
                 optimizer.step()
+        if len(histopath) > 0:
+            torch.save(model.state_dict(), histopath+"-e"+str(epoch+1)+".pt")
         print(f'Epoch:{epoch+1}, Loss:{loss.item():.4f}')
     return None
