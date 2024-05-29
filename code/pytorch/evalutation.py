@@ -4,6 +4,8 @@ import numpy as np
 
 from sklearn import metrics
 
+from constants import VALID_ALGORITHMS, VALID_DATASETS
+
 absolute_path = os.path.dirname(__file__)
 
 def collect_normal(file_prefix, file_path, result_suffix, column_name):
@@ -145,19 +147,6 @@ def collect_all_results(file_prefix, names):
     
     result.to_excel(os.path.join(absolute_path, "./results/" + file_prefix + "test-ALL.xlsx"))
     
-    
-range_start = 100
-range_end = 105
-file_prefix = "250-Epochs/0.25/"
 
-collect_normal(file_prefix, "DRAE", "DRAE-complete", "DRAE")
-collect_normal(file_prefix, "CAE", "CAE-complete", "CAE")
-
-for i in range(range_start, range_end):
-    collect_single_my(file_prefix, str(i), "myCAE-"+str(i))
-    
-file_paths = ["myCAE-"+ str(i) + ".csv" for i in range(range_start,range_end)]
-collect_single_run_my(file_prefix, file_paths, "myCAE-complete")
-
-names = ["myCAE", "CAE", "DRAE"]
-collect_all_results(file_prefix, names)
+if __name__ == "__main__":
+    collect_all_results()

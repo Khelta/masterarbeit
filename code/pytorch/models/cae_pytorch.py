@@ -103,6 +103,7 @@ class CAE_32(nn.Module):
         nf = 64
         self.nf = nf
 
+        #TODO Remove batchnorm,
         # Encoder
         self.enc_conv1 = nn.Conv2d(in_channels=in_channels, out_channels=nf, kernel_size=3, stride=2, padding=1)
         self.enc_bn1 = nn.BatchNorm2d(num_features=nf)
