@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import torch
 import torch.nn as nn
+import numpy as np
 
 from algorithms import *
 from datasets import prepare_data
@@ -34,36 +35,46 @@ def complete_run_cae(dataset, algorithm, file_prefix, selected_label=9, cop=0.05
     criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(),eps=1e-7, weight_decay=0.0005)
     
-    train_loader, test_loader = prepare_data(dataset, selected_label, ap, batch_size=64 if algorithm=="DRAE" else 1024)
+    train_loader, test_loader = prepare_data(dataset, selected_label, ap, batch_size=256)
     
     if algorithm == "CAE":
         train_cae_single(train_loader, model, criterion, optimizer, epochs=num_epochs, device=device, histopath=histopath)
     elif algorithm == "myCAE":
-        train_cae_my(train_loader, model, criterion, optimizer, epochs=num_epochs, ap=ap, device=device, histopath=histopath, dataset=dataset)
-    elif algorithm == "myCAEsoft":
-        train_cae_my_soft(train_loader, model, criterion, optimizer, epochs=num_epochs, ap=ap, device=device)
+        train_cae_my(train_loader, model, criterion, optimizer, epochs=num_epochs, cop=cop, device=device, histopath=histopath, dataset=dataset)
     elif algorithm == "DRAE":
         criterion = DRAELossAutograd(lamb=0.1)
-        train_drae(train_loader, model, criterion, optimizer, epochs=num_epochs, ap=ap, device=device, histopath=histopath, dataset=dataset)
+        train_drae(train_loader, model, criterion, optimizer, epochs=num_epochs, device=device, histopath=histopath, dataset=dataset)
 
     
     def calculate_losses(loader, device):
         normal = []
         anomalie = []
         anomalie_label = []
-        for (img, label) in loader:
-            img = img.to(device)
-            recon = model(img)
-            for i in range(0, len(img)):
-                loss = criterion(recon[i], img[i])
-                if label[i].item() == selected_label:
-                    normal.append(loss)
-                else:
-                    anomalie.append(loss)
-                    anomalie_label.append(label[i].item())
+        for (batch, label) in loader:
+            batch = batch.to(device)
+            recon = model(batch)
+            c = criterion.__class__(reduction="none")
+            loss = c(batch, recon).view(batch.shape[0], -1).mean(1)
                 
-        normal = [round(tensor.tolist(),5) for tensor in normal]
-        anomalie = [round(tensor.tolist(),5) for tensor in anomalie]
+            mask_normal = label == selected_label
+            mask_anomalie = label != selected_label
+            indices_normal = torch.nonzero(mask_normal).squeeze()
+            indices_anomalie = torch.nonzero(mask_anomalie).squeeze()
+            
+            if len(indices_normal.size()) == 0:
+                normal += [loss[indices_normal].tolist()]
+            else:
+                normal += loss[indices_normal].tolist()
+            if len(indices_anomalie.size()) == 0:
+                anomalie += [loss[indices_anomalie].tolist()]
+                anomalie_label += [label[indices_anomalie].tolist()]
+            else:
+                anomalie += loss[indices_anomalie].tolist()
+                anomalie_label += label[indices_anomalie].tolist()
+        
+        decimals = 5
+        normal = list(np.around(np.array(normal),decimals))
+        anomalie = list(np.around(np.array(anomalie),decimals))
         return normal, anomalie, anomalie_label
     
     def calculate_losses_drae(testloader):
@@ -87,13 +98,13 @@ def complete_run_cae(dataset, algorithm, file_prefix, selected_label=9, cop=0.05
 
     if algorithm != "DRAE":
         normal_train, anomalie_train, anomalie_label_train = calculate_losses(train_loader, device)
-        train_loss_all = normal_train + anomalie_label_train
+        train_loss_all = normal_train + anomalie_train
         train_labels = [selected_label]*len(normal_train) + anomalie_label_train
         if test_loader is not None:
             normal_test, anomalie_test, anomalie_label_test = calculate_losses(test_loader, device)
-            test_loss_all = normal_test + anomalie_label_test
+            test_loss_all = normal_test + anomalie_test
             test_labels = [selected_label]*len(normal_test) + anomalie_label_test
-    else:
+    elif algorithm == "DRAE":
         train_loss_all, train_labels = calculate_losses_drae(train_loader)
         if test_loader is not None:
             test_loss_all, test_labels = calculate_losses_drae(test_loader)

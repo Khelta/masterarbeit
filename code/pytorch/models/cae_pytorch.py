@@ -39,58 +39,20 @@ class CAE_28(nn.Module):
         self.dec_conv3 = nn.ConvTranspose2d(in_channels=nf, out_channels=in_channels, kernel_size=3, stride=2, padding=1, output_padding=1)
         self.output_act = nn.Tanh()
 
-    """def encode(self, x):
-        #print(len(x[0]), len(x[0][0]))
-        x = self.enc_act1(self.enc_bn1(self.enc_conv1(x)))
-        #print(len(x[0]), len(x[0][0]))
-        x = self.enc_act2(self.enc_bn2(self.enc_conv2(x)))
-        #print(len(x[0]), len(x[0][0]))
-        x = self.enc_act3(self.enc_bn3(self.enc_conv3(x)))
-        #print(len(x[0]), len(x[0][0]))
-        rep = self.rep_act(self.enc_fc(x.view(x.size(0), -1)))
-        #print(len(rep[0]))
-        return rep"""
-        
     def encode(self, x):
-        #print(len(x[0]), len(x[0][0]))
-        x = self.enc_act1((self.enc_conv1(x)))
-        #print(len(x[0]), len(x[0][0]))
-        x = self.enc_act2((self.enc_conv2(x)))
-        #print(len(x[0]), len(x[0][0]))
-        x = self.enc_act3((self.enc_conv3(x)))
-        #print(len(x[0]), len(x[0][0]))
+        x = self.enc_act1(self.enc_bn1(self.enc_conv1(x)))
+        x = self.enc_act2(self.enc_bn2(self.enc_conv2(x)))
+        x = self.enc_act3(self.enc_bn3(self.enc_conv3(x)))
         rep = self.rep_act(self.enc_fc(x.view(x.size(0), -1)))
-        #print(len(rep[0]))
         return rep
 
-    """def decode(self, rep):
-        #print("Decode")
-        #print(len(rep[0]))
-        x = self.dec_act0(self.dec_bn0(self.dec_fc(rep)))
-        #print(len(x[0]))
-        x = x.view(-1, self.nf * 4, 4, 4)
-        #print(len(x[0]), len(x[0][0]))
-        x = self.dec_act1(self.dec_bn1(self.dec_conv1(x)))
-        #print(len(x[0]), len(x[0][0]))
-        x = self.dec_act2(self.dec_bn2(self.dec_conv2(x)))
-        #print(len(x[0]), len(x[0][0]))
-        x = self.output_act(self.dec_conv3(x))
-        #print(len(x[0]), len(x[0][0]))
-        return x"""
         
     def decode(self, rep):
-        #print("Decode")
-        #print(len(rep[0]))
-        x = self.dec_act0((self.dec_fc(rep)))
-        #print(len(x[0]))
+        x = self.dec_act0(self.dec_bn0(self.dec_fc(rep)))
         x = x.view(-1, self.nf * 4, 4, 4)
-        #print(len(x[0]), len(x[0][0]))
-        x = self.dec_act1((self.dec_conv1(x)))
-        #print(len(x[0]), len(x[0][0]))
-        x = self.dec_act2((self.dec_conv2(x)))
-        #print(len(x[0]), len(x[0][0]))
+        x = self.dec_act1(self.dec_bn1(self.dec_conv1(x)))
+        x = self.dec_act2(self.dec_bn2(self.dec_conv2(x)))
         x = self.output_act(self.dec_conv3(x))
-        #print(len(x[0]), len(x[0][0]))
         return x
 
     def forward(self, x):
@@ -137,18 +99,18 @@ class CAE_32(nn.Module):
         self.output_act = nn.Tanh()
         
     def encode(self, x):
-        x = self.enc_act1((self.enc_conv1(x)))
-        x = self.enc_act2((self.enc_conv2(x)))
-        x = self.enc_act3((self.enc_conv3(x)))
+        x = self.enc_act1(self.enc_bn1(self.enc_conv1(x)))
+        x = self.enc_act2(self.enc_bn2(self.enc_conv2(x)))
+        x = self.enc_act3(self.enc_bn3(self.enc_conv3(x)))
         rep = self.rep_act(self.enc_fc(x.view(x.size(0), -1)))
         return rep
 
         
     def decode(self, rep):
-        x = self.dec_act0((self.dec_fc(rep)))
+        x = self.dec_act0(self.dec_bn0(self.dec_fc(rep)))
         x = x.view(-1, self.nf * 4, 4, 4)
-        x = self.dec_act1((self.dec_conv1(x)))
-        x = self.dec_act2((self.dec_conv2(x)))
+        x = self.dec_act1(self.dec_bn1(self.dec_conv1(x)))
+        x = self.dec_act2(self.dec_bn2(self.dec_conv2(x)))
         x = self.output_act(self.dec_conv3(x))
         return x
 

@@ -36,38 +36,20 @@ class AverageMeter(object):
         self.avg = self.sum / self.count
 
 
-def train_cae_my(train_loader, model, criterion, optimizer, epochs, ap, device, histopath='', dataset="mnist"):
-    def f(batch):
-        result = []
-        for img in batch:
-            img = img.unsqueeze(0)
-            recon = model(img)
-            loss = criterion(recon, img)
-            result.append((img, loss))
-        return result
-    
+def train_cae_my(train_loader, model, criterion, optimizer, epochs, cop, device, histopath='', dataset="mnist"):
+    c = criterion.__class__(reduction='none')
     for epoch in range(epochs):
-        imgs = []
-        num_processes = 4
-        imgs = []
         for (batch, _) in train_loader:
             batch = batch.to(device)
-            result = f(batch)
-            """with multiprocessing.pool.ThreadPool(num_processes) as p:
-                result = p.map(f, batch)"""
-            imgs += result
-        
-        #print(len(results))
-    
-        imgs.sort(key=lambda x: x[1])
-        l = int(ap * len(imgs))
-        imgs = imgs[:l]
-        optimizer.zero_grad()
+            recon = model(batch)
+            losses = c(batch, recon).view(batch.shape[0], -1).mean(1)
+            indices = torch.argsort(losses)
+            
+            l = int(cop * len(batch))
+            batch = batch[indices][:l]
+            recon = recon[indices][:l]
 
-        for data in imgs:
-            img = data[0]
-            recon = model(img)
-            loss = criterion(recon, img)
+            loss = criterion(batch, recon)
 
             optimizer.zero_grad()
             loss.backward()
@@ -76,87 +58,34 @@ def train_cae_my(train_loader, model, criterion, optimizer, epochs, ap, device, 
         if len(histopath) > 0:
             torch.save(model.state_dict(), histopath+"-e"+str(epoch+1)+".pt")
         print(f'Epoch:{epoch+1}, Loss:{loss.item():.4f}')
-    
-    return None
-
-
-def train_cae_my_soft(train_loader, model, criterion, optimizer, epochs, ap, device):
-    def f(batch):
-        result = []
-        for img in batch:
-            img = img.unsqueeze(0).unsqueeze(0)
-            recon = model(img)
-            loss = criterion(recon, img)
-            result.append((img, loss))
-        return result
-    
-    for epoch in range(epochs):
-        imgs = []
-
-        num_processes = 4
-        processes = []
-        imgs = []
-        for (batch, _) in train_loader:
-            batch = batch.to(device)
-            with multiprocessing.pool.ThreadPool(num_processes) as p:
-                result = p.map(f, batch)
-            imgs += result
-            
-        #print(len(results))
-    
-        imgs.sort(key=lambda x: x[0][1])
-        optimizer.zero_grad()
-
-        losses = []
-
-        for i in range(0, len(imgs)):
-            img = imgs[i][0][0]
-            recon = model(img)
-            loss = criterion(recon, img)
-            #loss *= (np.tanh(-i/len(imgs)*2*np.pi+np.pi)+1)/2
-            losses.append(loss.item())
-            
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-
-        print(f'Epoch:{epoch+1}, Loss:{sum(losses)/len(losses):.4f}')
     
     return None
 
 
 def train_cae_single(train_loader, model, criterion, optimizer, epochs, device, histopath=''):
-    model = model.to(device)
     for epoch in range(epochs):
-        for data in train_loader:
-            imgs, _ = data
-            for img in imgs:
-                img = img.to(device)
-                img = img.unsqueeze(0)
-                optimizer.zero_grad()
-                output = model(img)
-                loss = criterion(output, img)
-                loss.backward()
-                optimizer.step()
+        for (batch, _) in train_loader:
+            batch = batch.to(device)
+            recon = model(batch)
+            loss = criterion(batch, recon)
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
         if len(histopath) > 0:
             torch.save(model.state_dict(), histopath+"-e"+str(epoch+1)+".pt")
         print(f'Epoch:{epoch+1}, Loss:{loss.item():.4f}')
     return None
 
 
-def train_drae(trainloader, model, criterion, optimizer, epochs, ap, device, histopath='', dataset="mnist"):
+def train_drae(trainloader, model, criterion, optimizer, epochs, device, histopath='', dataset="mnist"):
     model.train()
     losses = AverageMeter()
     for epoch in range(epochs):
         for batch_id, (inputs, _) in enumerate(trainloader):
-            #for input in inputs:
-                #input = input.unsqueeze(0)
                 inputs = torch.autograd.Variable(inputs.cuda())
-
                 outputs = model(inputs)
-
                 loss = criterion(inputs, outputs)
-
                 losses.update(loss.item(), inputs.size(0))
 
                 # compute gradient and do SGD step
@@ -166,7 +95,6 @@ def train_drae(trainloader, model, criterion, optimizer, epochs, ap, device, his
         
         print(f'Epoch:{epoch+1}, Loss:{loss.item():.4f}')
            
-
 
 class DRAELossAutograd(nn.Module):
 

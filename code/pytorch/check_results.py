@@ -16,8 +16,6 @@ class bcolors:
 absolute_path = os.path.dirname(__file__)
 compare_path = os.path.join(absolute_path, "./results")
 
-VALID_ALGORITHMS.remove("myCAEsoft")
-
 def check_results_all(epoch=30):
      for algorithm in VALID_ALGORITHMS:
         for dataset in VALID_DATASETS:

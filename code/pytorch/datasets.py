@@ -5,7 +5,7 @@ from torchvision import datasets, transforms
 
 absolute_path = os.path.dirname(__file__)
 
-def prepare_data(dataset, selected_label, ap, batch_size=1024):
+def prepare_data(dataset, selected_label, ap, batch_size=256):
     transform = transforms.ToTensor()
     
     possible_datasets = ["mnist", "fashion", "svhn", "cifar10", "cifar100"]

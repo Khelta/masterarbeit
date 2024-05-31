@@ -7,7 +7,8 @@ from procedure import complete_run_cae
 
 absolute_path = os.path.dirname(__file__)
 
-def run(algorithm, dataset, ap, epochs, cop=None, cycles=5, historun=False):
+def run(algorithm, dataset, ap, epochs, cop=None, historun=False):
+    cycles = 5 if algorithm == "myCAE" else 1
     print(algorithm, dataset, ap, epochs, cop, cycles)
     
     if cop is None: 
@@ -72,7 +73,6 @@ if __name__ == "__main__":
     parser.add_argument("-ap", help="The proportion of anomalies in the total data set", type=restricted_float, default=0.25)
     parser.add_argument("-dataset", "-d", help="The dataset to be used", choices=VALID_DATASETS, default="mnist")
     parser.add_argument("-algorithm", "-a", help="The algorithm to use for training", choices=VALID_ALGORITHMS, default="myCAE")
-    parser.add_argument("-cycles", "-c", help="The number of repetitions", type=int, default=5)
     parser.add_argument("--historun", action='store_true', help="Starts a run where the model is saved each epoch")
    
     args = parser.parse_args()
