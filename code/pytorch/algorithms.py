@@ -1,20 +1,12 @@
 
 import torch
 import torch.nn as nn
-import torch.optim as optim
-from torchvision import datasets, transforms
-import matplotlib.pyplot as plt
-import numpy as np
-from sklearn import metrics
-import pandas as pd
-import os
-import multiprocessing
 
-from models.cae_pytorch import CAE_28
-from constants import DATASETS_IN_CHANNELS
+import os
 
 
 absolute_path = os.path.dirname(__file__)
+
 
 class AverageMeter(object):
     """Computes and stores the average and current value
@@ -44,10 +36,10 @@ def train_cae_my(train_loader, model, criterion, optimizer, epochs, cop, device,
             recon = model(batch)
             losses = c(batch, recon).view(batch.shape[0], -1).mean(1)
             indices = torch.argsort(losses)
-            
-            l = int(cop * len(batch))
-            batch = batch[indices][:l]
-            recon = recon[indices][:l]
+
+            index = int(cop * len(batch))
+            batch = batch[indices][:index]
+            recon = recon[indices][:index]
 
             loss = criterion(batch, recon)
 
@@ -56,9 +48,9 @@ def train_cae_my(train_loader, model, criterion, optimizer, epochs, cop, device,
             optimizer.step()
 
         if len(histopath) > 0:
-            torch.save(model.state_dict(), histopath+"-e"+str(epoch+1)+".pt")
+            torch.save(model.state_dict(), histopath + "-e" + str(epoch + 1) + ".pt")
         print(f'Epoch:{epoch+1}, Loss:{loss.item():.4f}')
-    
+
     return None
 
 
@@ -73,7 +65,7 @@ def train_cae_single(train_loader, model, criterion, optimizer, epochs, device, 
             loss.backward()
             optimizer.step()
         if len(histopath) > 0:
-            torch.save(model.state_dict(), histopath+"-e"+str(epoch+1)+".pt")
+            torch.save(model.state_dict(), histopath + "-e" + str(epoch + 1) + ".pt")
         print(f'Epoch:{epoch+1}, Loss:{loss.item():.4f}')
     return None
 
@@ -83,18 +75,18 @@ def train_drae(trainloader, model, criterion, optimizer, epochs, device, histopa
     losses = AverageMeter()
     for epoch in range(epochs):
         for batch_id, (inputs, _) in enumerate(trainloader):
-                inputs = torch.autograd.Variable(inputs.cuda())
-                outputs = model(inputs)
-                loss = criterion(inputs, outputs)
-                losses.update(loss.item(), inputs.size(0))
+            inputs = torch.autograd.Variable(inputs.cuda())
+            outputs = model(inputs)
+            loss = criterion(inputs, outputs)
+            losses.update(loss.item(), inputs.size(0))
 
-                # compute gradient and do SGD step
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
-        
+            # compute gradient and do SGD step
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
         print(f'Epoch:{epoch+1}, Loss:{loss.item():.4f}')
-           
+
 
 class DRAELossAutograd(nn.Module):
 
@@ -109,11 +101,10 @@ class DRAELossAutograd(nn.Module):
         total_scatter = err.sub(err.mean()).pow(2).sum()
         regul = 1e6
         obj = None
-        for i in range(inputs.size(0)-1):
-            err_in = err_sorted[:i+1]
-            err_out = err_sorted[i+1:]
-            within_scatter = err_in.sub(err_in.mean()).pow(2).sum() + \
-                             err_out.sub(err_out.mean()).pow(2).sum()
+        for i in range(inputs.size(0) - 1):
+            err_in = err_sorted[:i + 1]
+            err_out = err_sorted[i + 1:]
+            within_scatter = err_in.sub(err_in.mean()).pow(2).sum() + err_out.sub(err_out.mean()).pow(2).sum()
             h = within_scatter.div(total_scatter)
             if h < regul:
                 regul = h
