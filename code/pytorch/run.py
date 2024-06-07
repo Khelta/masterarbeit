@@ -1,7 +1,7 @@
 import argparse
 import os
 
-from constants import VALID_ALGORITHMS, VALID_DATASETS
+from constants import VALID_ALGORITHMS, VALID_DATASETS, LABELS_MNIST, LABELS_SVHN, LABELS_FASHION, LABELS_CIFAR10, LABELS_CIFAR100
 from procedure import complete_run_cae
 
 absolute_path = os.path.dirname(__file__)

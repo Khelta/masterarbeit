@@ -17,3 +17,4 @@ LABEL_DICT = {"mnist": LABELS_MNIST,
               "cifar100": LABELS_CIFAR100}
 
 CUT_OFF_PERCENTS = [0.5, 0.6, 0.7, 0.8, 0.9]
+AU_METRICS = ["auroc", "aupr_IN", "aupr_OUT"]

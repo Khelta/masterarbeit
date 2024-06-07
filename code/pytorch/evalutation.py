@@ -1,149 +1,126 @@
 import os
 import pandas as pd
-import numpy as np
 
 from sklearn import metrics
+from constants import VALID_DATASETS, ANOMALIE_PERCENTS, LABEL_DICT, CUT_OFF_PERCENTS, AU_METRICS
 
 absolute_path = os.path.dirname(__file__)
 
 
-def collect_normal(file_prefix, file_path, result_suffix, column_name):
-    results_train = {}
-    results_test = {}
-
-    file_path = os.path.join(absolute_path, "./results/" + file_prefix + file_path)
-    for filename in os.listdir(file_path):
-        f = os.path.join(file_path, filename)
-
-        if os.path.isfile(f):
-            data_path = os.path.join(file_path, filename)
-            data = pd.read_csv(data_path)
-            label = filename.split("-")[0]
-            data["Label"] = data["Label"].map(lambda x: 0 if str(x) == label else 1)
-            fpr, tpr, _ = metrics.roc_curve(data["Label"], data["Loss"])
-            roc_auc = metrics.auc(fpr, tpr)
-
-            if filename[-14:] == "train-loss.csv":
-                if label not in results_train:
-                    results_train[label] = [roc_auc]
-                else:
-                    results_train[label].append(roc_auc)
-            elif filename[-13:] == "test-loss.csv":
-                if label not in results_test:
-                    results_test[label] = [roc_auc]
-                else:
-                    results_test[label].append(roc_auc)
-
-    def create_df(results):
-        indices = []
-        column_values = []
-        stds = []
-        for label, values in results.items():
-            indices.append(label)
-            column_values.append(np.mean(results[label]))
-            stds.append(np.std(results[label]))
-
-        indices += ["mean", "mean std"]
-        column_values += [np.mean(column_values), np.mean(stds)]
-        result = pd.DataFrame(column_values, index=indices, columns=[column_name])
-        return result
-
-    train_path = os.path.join(absolute_path, "./results/" + file_prefix + "train-" + str(result_suffix) + ".csv")
-    test_path = os.path.join(absolute_path, "./results/" + file_prefix + "test-" + str(result_suffix) + ".csv")
-    create_df(results_train).to_csv(train_path)
-    create_df(results_test).to_csv(test_path)
+def create_df(results, ismycae):
+    df = pd.DataFrame()
+    for label, value in results.items():
+        train_loss_percent = label.split("-")[-1]
+        actual_label = label.split("-")[0]
+        df.at[actual_label, train_loss_percent] = value
+    if not ismycae:
+        mean = df.mean(axis=1)
+        std = df.std(axis=1).mean()
+        df["Loss"] = mean
+        df.loc["avg mean"] = df["Loss"].mean()
+        df.loc["avg std"] = std
+        df = df[["Loss"]]
+    return df
 
 
-def collect_single_my(file_prefix, file_path, result_suffix):
-    results_train = {}
-    results_test = {}
+def merge(paths):
+    dfs = [pd.read_csv(path) for path in paths]
+    for i in range(1, len(dfs)):
+        dfs[i] = dfs[i].drop(columns=["Unnamed: 0"])
+    result = pd.concat(dfs, axis=1)
+    result.set_index("Unnamed: 0", inplace=True)
+    stds = result.T.groupby(by=result.columns).std().T
+    result = result.T.groupby(by=result.columns).mean().T
+    result.loc["avg mean"] = result.mean()
+    result.loc["avg std"] = stds.mean()
+    return result
 
-    file_path = os.path.join(absolute_path, "./results/" + file_prefix + file_path)
-    for filename in os.listdir(file_path):
+
+def collect_single(file_prefix, ap, cop, ismycae, has_test=False):
+    ap = str(ap)
+    results_train = {metric: {ap: {}} for metric in AU_METRICS}
+    if has_test:
+        results_test = {metric: {ap: {}} for metric in AU_METRICS}
+
+    file_path = os.path.join(absolute_path, "./results/" + file_prefix)
+    files = os.listdir(file_path)
+    files = [file for file in files if file.split("-")[2] == ap]
+    for filename in files:
         f = os.path.join(file_path, filename)
 
         if os.path.isfile(f) and f[-4:] == ".csv":
             data_path = os.path.join(file_path, filename)
             data = pd.read_csv(data_path)
-            label = filename.split("-")[0]
-            train_loss_percent = filename.split("-")[2]
+            label, _, cop = filename.split("-")[1:4]
             data["Label"] = data["Label"].map(lambda x: 0 if str(x) == label else 1)
             fpr, tpr, _ = metrics.roc_curve(data["Label"], data["Loss"])
-            roc_auc = metrics.auc(fpr, tpr)
+            auroc = metrics.auc(fpr, tpr)
 
-            key = label + "-" + train_loss_percent
+            p, r, _ = metrics.precision_recall_curve(data["Label"], data["Loss"])
+            aupr_IN = metrics.auc(r, p)
+
+            data["Label"] = data["Label"].replace({0: 1, 1: 0})
+            p, r, _ = metrics.precision_recall_curve(data["Label"], data["Loss"])
+            aupr_OUT = metrics.auc(r, p)
+
+            key = str(label) + "-" + cop
             if filename[-14:] == "train-loss.csv":
-                results_train[key] = roc_auc
+                results_train["auroc"][ap][key] = auroc
+                results_train["aupr_IN"][ap][key] = aupr_IN
+                results_train["aupr_OUT"][ap][key] = aupr_OUT
 
             elif filename[-13:] == "test-loss.csv":
-                results_test[key] = roc_auc
+                results_test["auroc"][ap][key] = auroc
+                results_test["aupr_IN"][ap][key] = aupr_IN
+                results_test["aupr_OUT"][ap][key] = aupr_OUT
 
-    def create_df(results):
-        df = pd.DataFrame()
-        for label, value in results.items():
-            train_loss_percent = label.split("-")[-1]
-            actual_label = label.split("-")[0]
-            df.at[actual_label, train_loss_percent] = value
-        return df
-
-    train_path = os.path.join(absolute_path, "./results/" + file_prefix + "train-" + str(result_suffix) + ".csv")
-    test_path = os.path.join(absolute_path, "./results/" + file_prefix + "test-" + str(result_suffix) + ".csv")
-    create_df(results_train).to_csv(train_path)
-    create_df(results_test).to_csv(test_path)
+    for metric in AU_METRICS:
+        path = "./results/" + file_prefix[:-2] + metric + ("-" + file_prefix[-2] if ismycae else "") + "-" + ap + "-"
+        train_path = os.path.join(absolute_path, path + "train.csv")
+        create_df(results_train[metric][ap], ismycae).to_csv(train_path)
+        if has_test:
+            test_path = os.path.join(absolute_path, path + "test.csv")
+            create_df(results_test[metric][ap], ismycae).to_csv(test_path)
 
 
-def collect_single_run_my(file_prefix, file_paths, result_suffix):
-    def run(prefix):
-        count = len(file_paths)
-        dfs = []
+def collect_all_results():
+    for algorithm in ["myCAE"]:
+        for dataset in VALID_DATASETS:
+            has_test = algorithm in ["myCAE", "CAE", "DRAE"]
+            path = os.path.join(absolute_path, "results/" + algorithm + "/" + dataset + "/")
+            print(algorithm, dataset)
+            for i in range(5):
+                for ap in ANOMALIE_PERCENTS:
+                    cycle = 0 if algorithm != "myCAE" else i
+                    files = os.listdir(path + "{}/".format(cycle))
+                    files = [filename for filename in files if filename.split("-")[2] == str(ap)]
+                    check = len(LABEL_DICT[dataset]) * len(CUT_OFF_PERCENTS) * 2 if has_test else 1
 
-        for i in range(0, len(file_paths)):
-            path = os.path.join(absolute_path, "./results/" + prefix + file_paths[i])
-            df = pd.read_csv(path)
-            dfs.append(df)
+                    if check != len(files):
+                        print("Check not passed for {} {} ap: {} - {}/{}".format(algorithm, dataset, ap, len(files), check))
+                        continue
 
-        stacked = pd.concat([df.stack() for df in dfs], axis=1)
-        stds = stacked.std(axis=1).unstack()
+                    cop = i * 0.1 + 0.5
+                    collect_single(algorithm + "/" + dataset + "/" + str(cycle) + "/", ap, cop, algorithm == "myCAE", has_test)
 
-        df = dfs[0]
-        for i in range(1, len(dfs)):
-            df += dfs[i]
+            if algorithm == "myCAE":
+                for ap in ANOMALIE_PERCENTS:
+                    for metric in AU_METRICS:
+                        for train in ["train.csv", "test.csv"]:
+                            path = os.path.join(absolute_path, "results/" + algorithm + "/" + dataset + "/")
+                            files = os.listdir(path)
+                            files = [file for file in files if os.path.isfile(path + file)]
+                            files = [file for file in files if file.split("-")[2] == str(ap)
+                                     and file.split("-")[0] == metric
+                                     and file.split("-")[-1] == train]
+                            files = [os.path.join(path, file) for file in files]
+                            if len(files) == 0:
+                                continue
+                            merge(files).to_csv(os.path.join(absolute_path, "results/" + algorithm + "/" + dataset + "/" + "-".join([metric, str(ap), train])))
+                            for file in files:
+                                os.remove(file)
 
-        df /= count
-
-        if 'Unnamed: 0' in df.columns:
-            df = df.drop(columns=["Unnamed: 0"])
-
-        for column in df:
-            df.at["mean", column] = df[column].mean()
-            df.loc["mean std", column] = stds[column].mean()
-        return df
-
-    train_path = os.path.join(absolute_path, "./results/" + file_prefix + "train-" + result_suffix + ".csv")
-    test_path = os.path.join(absolute_path, "./results/" + file_prefix + "test-" + result_suffix + ".csv")
-    run(file_prefix + "train-").to_csv(train_path)
-    run(file_prefix + "test-").to_csv(test_path)
-
-
-def collect_all_results(file_prefix, names):
-    train = ["train-" + name + "-complete.csv" for name in names]
-    test = ["test-" + name + "-complete.csv" for name in names]
-
-    train = [pd.read_csv(os.path.join(absolute_path, "./results/" + file_prefix + name)) for name in train]
-    for i in range(1, len(train)):
-        train[i] = train[i].drop(columns=["Unnamed: 0"])
-    result = pd.concat(train, axis=1)
-    result.set_index("Unnamed: 0", inplace=True)
-
-    result.to_excel(os.path.join(absolute_path, "./results/" + file_prefix + "train-ALL.xlsx"))
-
-    test = [pd.read_csv(os.path.join(absolute_path, "./results/" + file_prefix + name)) for name in test]
-    for i in range(1, len(test)):
-        test[i] = test[i].drop(columns=["Unnamed: 0"])
-    result = pd.concat(test, axis=1)
-    result.set_index("Unnamed: 0", inplace=True)
-
-    result.to_excel(os.path.join(absolute_path, "./results/" + file_prefix + "test-ALL.xlsx"))
+    # TODO Collect all algos in one file
 
 
 if __name__ == "__main__":
