@@ -2,10 +2,12 @@ import numpy as np
 import os
 import torch
 from torchvision import datasets, transforms
+from functools import lru_cache
 
 absolute_path = os.path.dirname(__file__)
 
 
+@lru_cache(maxsize=None)
 def prepare_data(dataset, selected_label, ap, batch_size=256):
     transform = transforms.ToTensor()
 

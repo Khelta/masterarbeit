@@ -11,18 +11,31 @@ from run import restricted_float
 absolute_path = os.path.dirname(__file__)
 
 
-def display_roc(filepath, label):
+def display_roc(filepath, label, ax):
     df = pd.read_csv(filepath)
     df["Label"] = df["Label"].map(lambda x: 0 if x == label else 1)
-    fpr, tpr, _ = metrics.roc_curve(df["Label"], df["Loss"])
-    roc_auc = metrics.auc(fpr, tpr)
-
-    display = metrics.RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc, estimator_name='example estimator')
-    display.plot()
-    plt.show()
+    metrics.RocCurveDisplay.from_predictions(df["Label"], df["Loss"], ax=ax)
+    ax.set_xlabel("False Positive Rate")
+    ax.set_ylabel("True Positive Rate")
 
 
-def display_hist(filepath, label, save=False):
+def display_prc_in(filepath, label, ax):
+    df = pd.read_csv(filepath)
+    df["Label"] = df["Label"].map(lambda x: 1 if x == label else 0)
+    metrics.PrecisionRecallDisplay.from_predictions(df["Label"], 1 / df["Loss"], plot_chance_level=True, ax=ax)
+    ax.set_xlabel("Recall")
+    ax.set_ylabel("Precision")
+
+
+def display_prc_out(filepath, label, ax):
+    df = pd.read_csv(filepath)
+    df["Label"] = df["Label"].map(lambda x: 0 if x == label else 1)
+    metrics.PrecisionRecallDisplay.from_predictions(df["Label"], df["Loss"], plot_chance_level=True, ax=ax)
+    ax.set_xlabel("Recall")
+    ax.set_ylabel("Precision")
+
+
+def display_hist_historun(filepath, label, save=False):
     df = pd.read_csv(filepath)
     df["Label"] = df["Label"].map(lambda x: 0 if x == label else 1)
     normal = df[df.Label == 0]["Loss"]
@@ -44,11 +57,31 @@ def display_hist(filepath, label, save=False):
         plt.show()
 
 
+def display_hist(filepath, label, ax, save=False):
+    df = pd.read_csv(filepath)
+    df["Label"] = df["Label"].map(lambda x: 0 if x == label else 1)
+    normal = df[df.Label == 0]["Loss"]
+    anomalie = df[df.Label == 1]["Loss"]
+
+    fpr, tpr, _ = metrics.roc_curve(df["Label"], df["Loss"])
+    roc_auc = metrics.auc(fpr, tpr)
+
+    bins = 20
+    ax.hist(normal, alpha=0.5, bins=bins, label='Data 1', edgecolor='black')
+    ax.hist(anomalie, alpha=0.5, bins=bins, label='Data 1', edgecolor='black')
+    if save:
+        filepath = filepath[:-4] + ".png"
+        split = filepath.split("-")
+        ax.title("{}/{} {} - ap:{} cop:{} - {} {}".format(split[0].split("/")[-1], split[5], split[1], split[2], split[3], split[6], str(round(roc_auc, 6))))
+        ax.savefig(filepath)
+        ax.clf()
+
+
 def historun(dirpath, label):
     dir = os.path.join(absolute_path, dirpath)
     for file in os.listdir(dir):
         if file[-3:] == "csv" and file.split("-")[1] == str(label):
-            display_hist(os.path.join(dir, file), label, True)
+            display_hist_historun(os.path.join(dir, file), label, True)
 
 
 if __name__ == "__main__":
@@ -98,8 +131,13 @@ if __name__ == "__main__":
                                                                                                         epochs,
                                                                                                         algorithm,
                                                                                                         "test" if test else "train"))
-        display_hist(path, label)
-        display_roc(path, label)
+        fig, axs = plt.subplots(1, 2)
+        # hist = display_hist(path, label, axs[0])
+        roc = display_prc_in(path, label, axs[0])
+        prc = display_prc_out(path, label, axs[1])
+        plt.tight_layout()
+        plt.show()
+
     elif args.subcommand == "historun":
         algorithm = args.algorithm
         dataset = args.dataset

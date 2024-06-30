@@ -53,13 +53,12 @@ def collect_single(file_prefix, ap, cop, ismycae, has_test=False):
             data = pd.read_csv(data_path)
             label, _, cop = filename.split("-")[1:4]
             data["Label"] = data["Label"].map(lambda x: 0 if str(x) == label else 1)
-            fpr, tpr, _ = metrics.roc_curve(data["Label"], data["Loss"])
-            auroc = metrics.auc(fpr, tpr)
+            auroc = metrics.roc_auc_score(data["Label"], data["Loss"])
 
-            p, r, _ = metrics.precision_recall_curve(data["Label"], data["Loss"])
+            x = data["Label"].replace({0: 1, 1: 0})
+            p, r, _ = metrics.precision_recall_curve(x, 1 / data["Loss"])
             aupr_IN = metrics.auc(r, p)
 
-            data["Label"] = data["Label"].replace({0: 1, 1: 0})
             p, r, _ = metrics.precision_recall_curve(data["Label"], data["Loss"])
             aupr_OUT = metrics.auc(r, p)
 
@@ -84,9 +83,9 @@ def collect_single(file_prefix, ap, cop, ismycae, has_test=False):
 
 
 def collect_all_results():
-    for algorithm in ["myCAE", "CAE"]:
+    for algorithm in ["myCAE", "CAE", "DeepSVDD", "DRAE"]:
         for dataset in VALID_DATASETS:
-            has_test = algorithm in ["myCAE", "CAE", "DRAE"]
+            has_test = algorithm in ["myCAE", "CAE", "DRAE"] and dataset != "svhn"
             path = os.path.join(absolute_path, "results/" + algorithm + "/" + dataset + "/")
             print(algorithm, dataset)
             for i in range(5):
@@ -94,16 +93,16 @@ def collect_all_results():
                     cycle = 0 if algorithm != "myCAE" else i
                     files = os.listdir(path + "{}/".format(cycle))
                     files = [filename for filename in files if filename.split("-")[2] == str(ap)]
-                    check = len(LABEL_DICT[dataset]) * len(CUT_OFF_PERCENTS) * 2 if has_test else 1
+                    check = len(LABEL_DICT[dataset]) * len(CUT_OFF_PERCENTS) * (2 if has_test else 1)
 
                     check_path = os.path.join(path, "{}-{}-train.csv".format(AU_METRICS[0], ap))
                     if os.path.isfile(check_path):
                         print("\tCycle {}|{} already created.".format(i, ap))
-                        continue
+                        #continue
 
                     if check != len(files):
                         print("Check not passed for {} {} ap: {} - {}/{}".format(algorithm, dataset, ap, len(files), check))
-                        continue
+                        #continue
 
                     cop = cycle * 0.1 + 0.5
                     collect_single(algorithm + "/" + dataset + "/" + str(cycle) + "/", ap, cop, algorithm == "myCAE", has_test)
@@ -138,7 +137,7 @@ def collect_all_results():
                             df = pd.read_csv(path)
                             df = df.set_index("Unnamed: 0")
                             if algorithm != "myCAE":
-                                df = df.rename(columns={"Loss": algorithm})  
+                                df = df.rename(columns={"Loss": algorithm})
                             result = pd.concat([result, df], axis=1)
                     directory = "./results/All/{}/".format(dataset)
                     directory = os.path.join(absolute_path, directory)
@@ -151,6 +150,7 @@ def collect_all_results():
         for t in ["train", "test"]:
             for metric in AU_METRICS:
                 result = pd.DataFrame()
+                resultStds = pd.DataFrame()
                 for ap in ANOMALIE_PERCENTS:
                     path = "results/All/{}/{}-{}-{}.xlsx".format(dataset, metric, ap, t)
                     path = os.path.join(absolute_path, path)
@@ -160,18 +160,25 @@ def collect_all_results():
                     df = df.T
                     df.columns = df.loc["Unnamed: 0"]
                     df = df.drop("Unnamed: 0")
+                    df_stds = df.rename(columns={"avg std": ap})
                     df = df.rename(columns={"avg mean": ap})
                     df = df[[ap]]
+                    df_stds = df_stds[[ap]]
                     if len(result) == 0:
                         result = pd.concat([result, df])
+                        resultStds = pd.concat([resultStds, df_stds])
                     else:
                         result = pd.merge(result, df, left_index=True, right_index=True, how="outer")
+                        resultStds = pd.merge(resultStds, df_stds, left_index=True, right_index=True, how="outer")
                 columns = list(result.columns)
                 columns.sort()
                 result = result[columns]
                 path = "results/All/{}/{}-{}-Combined.xlsx".format(dataset, metric, t)
                 path = os.path.join(absolute_path, path)
                 result.to_excel(path)
+                path = "results/All/{}/{}-{}-stds-Combined.xlsx".format(dataset, metric, t)
+                path = os.path.join(absolute_path, path)
+                resultStds.to_excel(path)
 
 
 if __name__ == "__main__":

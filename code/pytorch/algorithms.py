@@ -100,7 +100,7 @@ class DRAELossAutograd(nn.Module):
         err_sorted, _ = torch.sort(err)
         total_scatter = err.sub(err.mean()).pow(2).sum()
         regul = 1e6
-        obj = None
+        obj = err_sorted[:inputs.size(0) - 1 + 1].mean()
         for i in range(inputs.size(0) - 1):
             err_in = err_sorted[:i + 1]
             err_out = err_sorted[i + 1:]

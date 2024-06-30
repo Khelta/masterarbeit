@@ -13,6 +13,9 @@ absolute_path = os.path.dirname(__file__)
 
 
 def complete_run_cae(dataset, algorithm, file_prefix, selected_label=9, cop=0.05, ap=0.5, num_epochs=30, historun=False):
+    if algorithm == "DeepSVDD":
+        raise ValueError()
+
     if algorithm not in VALID_ALGORITHMS:
         raise ValueError("Algoritm must be in " + str(VALID_ALGORITHMS))
 

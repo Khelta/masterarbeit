@@ -97,7 +97,7 @@ class CAE_32(nn.Module):
 
         self.dec_conv3 = nn.ConvTranspose2d(in_channels=nf, out_channels=in_channels, kernel_size=3, stride=2, padding=1, output_padding=1)
         self.output_act = nn.Tanh()
-        
+
     def encode(self, x):
         x = self.enc_act1(self.enc_bn1(self.enc_conv1(x)))
         x = self.enc_act2(self.enc_bn2(self.enc_conv2(x)))
@@ -105,9 +105,11 @@ class CAE_32(nn.Module):
         rep = self.rep_act(self.enc_fc(x.view(x.size(0), -1)))
         return rep
 
-        
     def decode(self, rep):
-        x = self.dec_act0(self.dec_bn0(self.dec_fc(rep)))
+        if rep.shape[0] == 1:
+            x = self.dec_act0((self.dec_fc(rep)))
+        else:
+            x = self.dec_act0(self.dec_bn0(self.dec_fc(rep)))
         x = x.view(-1, self.nf * 4, 4, 4)
         x = self.dec_act1(self.dec_bn1(self.dec_conv1(x)))
         x = self.dec_act2(self.dec_bn2(self.dec_conv2(x)))

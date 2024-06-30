@@ -29,7 +29,7 @@ def run(algorithm, dataset, ap, epochs, cop=None, historun=False):
 
                     print(file_prefix)
                     print("Cycle:", cycle)
-                    if not os.path.exists(file_prefix + "-train-loss.csv"):
+                    if not os.path.exists(os.path.join(absolute_path, file_prefix + "-train-loss.csv")):
                         complete_run_cae(dataset, algorithm, file_prefix, label, cop, ap, epochs)
     else:
         labels = globals()["LABELS_" + dataset.upper()]
