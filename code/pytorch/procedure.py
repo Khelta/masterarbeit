@@ -6,7 +6,7 @@ import numpy as np
 
 from algorithms import train_cae_my, train_cae_single, train_drae, DRAELossAutograd
 from datasets import prepare_data
-from models.cae_pytorch import CAE_28, CAE_32
+from models.cae_pytorch import CAE_28, CAE_32, CAE_drop_28, CAE_drop_32
 from constants import VALID_ALGORITHMS, VALID_DATASETS
 
 absolute_path = os.path.dirname(__file__)
@@ -25,9 +25,15 @@ def complete_run_cae(dataset, algorithm, file_prefix, selected_label=9, cop=0.05
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     if dataset in ["mnist", "fashion"]:
-        model = CAE_28(in_channels=1)
+        if algorithm == "CAEDrop":
+            model = CAE_drop_28(in_channels=1)
+        else:
+            model = CAE_28(in_channels=1)
     else:
-        model = CAE_32(in_channels=3)
+        if algorithm == "CAEDrop":
+            model = CAE_drop_32(in_channels=3)
+        else:
+            model = CAE_32(in_channels=3)
     model = model.to(device)
 
     if historun is True:
@@ -46,6 +52,8 @@ def complete_run_cae(dataset, algorithm, file_prefix, selected_label=9, cop=0.05
         train_cae_single(train_loader, model, criterion, optimizer, epochs=num_epochs, device=device, histopath=histopath)
     elif algorithm == "myCAE":
         train_cae_my(train_loader, model, criterion, optimizer, epochs=num_epochs, cop=cop, device=device, histopath=histopath, dataset=dataset)
+    elif algorithm == "CAEDrop":
+        train_cae_single(train_loader, model, criterion, optimizer, epochs=num_epochs, device=device, histopath=histopath)
     elif algorithm == "DRAE":
         criterion = DRAELossAutograd(lamb=0.1)
         train_drae(train_loader, model, criterion, optimizer, epochs=num_epochs, device=device, histopath=histopath, dataset=dataset)
