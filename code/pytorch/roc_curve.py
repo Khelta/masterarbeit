@@ -45,8 +45,8 @@ def display_hist_historun(filepath, label, save=False):
     roc_auc = metrics.auc(fpr, tpr)
 
     bins = 20
-    plt.hist(normal, alpha=0.5, bins=bins, label='Data 1', edgecolor='black')
-    plt.hist(anomalie, alpha=0.5, bins=bins, label='Data 1', edgecolor='black')
+    plt.hist(normal, alpha=0.5, bins=bins, range=(0, 0.3), label='Data 1', edgecolor='black')
+    plt.hist(anomalie, alpha=0.5, bins=bins, range=(0, 0.3), label='Data 1', edgecolor='black')
     if save:
         filepath = filepath[:-4] + ".png"
         split = filepath.split("-")
@@ -216,4 +216,4 @@ if __name__ == "__main__":
         dataset = args.dataset
         cycle = args.cycle
         label = args.label
-        historun("results/{}/{}/{}/".format(algorithm, dataset, cycle), label)
+        historun("results/historun/{}/{}/{}/".format(algorithm, dataset, cycle), label)

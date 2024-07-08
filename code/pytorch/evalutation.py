@@ -83,9 +83,9 @@ def collect_single(file_prefix, ap, cop, ismycae, has_test=False):
 
 
 def collect_all_results():
-    for algorithm in ["myCAE", "CAE", "DeepSVDD", "DRAE"]:
+    for algorithm in ["myCAE", "CAE", "CAEDrop", "DeepSVDD", "DRAE"]:
         for dataset in VALID_DATASETS:
-            has_test = algorithm in ["myCAE", "CAE", "DRAE"] and dataset != "svhn"
+            has_test = algorithm in ["myCAE", "CAE", "CAEDrop", "DRAE"] and dataset != "svhn"
             path = os.path.join(absolute_path, "results/" + algorithm + "/" + dataset + "/")
             print(algorithm, dataset)
             for i in range(5):
@@ -98,11 +98,11 @@ def collect_all_results():
                     check_path = os.path.join(path, "{}-{}-train.csv".format(AU_METRICS[0], ap))
                     if os.path.isfile(check_path):
                         print("\tCycle {}|{} already created.".format(i, ap))
-                        #continue
+                        continue
 
                     if check != len(files):
                         print("Check not passed for {} {} ap: {} - {}/{}".format(algorithm, dataset, ap, len(files), check))
-                        #continue
+                        continue
 
                     cop = cycle * 0.1 + 0.5
                     collect_single(algorithm + "/" + dataset + "/" + str(cycle) + "/", ap, cop, algorithm == "myCAE", has_test)
