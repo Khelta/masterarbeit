@@ -30,7 +30,12 @@ class AverageMeter(object):
 
 def train_cae_my(train_loader, model, criterion, optimizer, epochs, cop, device, histopath='', dataset="mnist"):
     c = criterion.__class__(reduction='none')
+    is_historun = len(histopath) > 0
+    if is_historun:
+        all_saved_losses = []
     for epoch in range(epochs):
+        if is_historun:
+            saved_losses = []
         for (batch, _) in train_loader:
             batch = batch.to(device)
             recon = model(batch)
@@ -43,15 +48,22 @@ def train_cae_my(train_loader, model, criterion, optimizer, epochs, cop, device,
 
             loss = criterion(batch, recon)
 
+            if is_historun:
+                saved_losses.append((float(loss), len(batch)))
+
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
-        if len(histopath) > 0:
+        if is_historun:
+            all_saved_losses.append(saved_losses)
             torch.save(model.state_dict(), histopath + "-e" + str(epoch + 1) + ".pt")
         print(f'Epoch:{epoch+1}, Loss:{loss.item():.4f}')
 
-    return None
+    if is_historun:
+        return all_saved_losses
+    else:
+        return None
 
 
 def train_cae_single(train_loader, model, criterion, optimizer, epochs, device, histopath=''):

@@ -8,6 +8,7 @@ from algorithms import train_cae_my, train_cae_single, train_drae, DRAELossAutog
 from datasets import prepare_data
 from models.cae_pytorch import CAE_28, CAE_32, CAE_drop_28, CAE_drop_32
 from constants import VALID_ALGORITHMS, VALID_DATASETS
+from helper import calculate_auprin_from_csv, calculate_auprout_from_csv, calculate_auroc_from_csv
 
 absolute_path = os.path.dirname(__file__)
 
@@ -49,14 +50,14 @@ def complete_run_cae(dataset, algorithm, file_prefix, selected_label=9, cop=0.05
     train_loader, test_loader = prepare_data(dataset, selected_label, ap, batch_size=batch_size)
 
     if algorithm == "CAE":
-        train_cae_single(train_loader, model, criterion, optimizer, epochs=num_epochs, device=device, histopath=histopath)
+        losses = train_cae_single(train_loader, model, criterion, optimizer, epochs=num_epochs, device=device, histopath=histopath)
     elif algorithm == "myCAE":
-        train_cae_my(train_loader, model, criterion, optimizer, epochs=num_epochs, cop=cop, device=device, histopath=histopath, dataset=dataset)
+        losses = train_cae_my(train_loader, model, criterion, optimizer, epochs=num_epochs, cop=cop, device=device, histopath=histopath, dataset=dataset)
     elif algorithm == "CAEDrop":
-        train_cae_single(train_loader, model, criterion, optimizer, epochs=num_epochs, device=device, histopath=histopath)
+        losses = train_cae_single(train_loader, model, criterion, optimizer, epochs=num_epochs, device=device, histopath=histopath)
     elif algorithm == "DRAE":
         criterion = DRAELossAutograd(lamb=0.1)
-        train_drae(train_loader, model, criterion, optimizer, epochs=num_epochs, device=device, histopath=histopath, dataset=dataset)
+        losses = train_drae(train_loader, model, criterion, optimizer, epochs=num_epochs, device=device, histopath=histopath, dataset=dataset)
 
     def calculate_losses(loader, device):
         normal = []
@@ -149,3 +150,22 @@ def complete_run_cae(dataset, algorithm, file_prefix, selected_label=9, cop=0.05
                                'Label': train_labels}).sort_values(by="Loss")
             path = os.path.join(absolute_path, str(file_prefix) + "-e{}-train-loss.csv".format(i))
             df.to_csv(path)
+
+        loss_per_epoch = []
+        label = file_prefix.split("-")[1]
+        for i in range(0, len(losses)):
+            current_loss = losses[i]
+            n = sum([size for loss, size in current_loss])
+            sum_batch_mean_losses = sum([loss * size for loss, size in current_loss])
+            mean_loss = sum_batch_mean_losses / n
+
+            path = histopath + "-e{}-train-loss.csv".format(i + 1)
+            auroc = calculate_auroc_from_csv(path, label)
+            auprin = calculate_auprin_from_csv(path, label)
+            auprout = calculate_auprout_from_csv(path, label)
+            loss_per_epoch.append((mean_loss, auroc, auprin, auprout))
+
+        df = pd.DataFrame(loss_per_epoch, columns=["Mean Loss", "AUROC", "AUPR-IN", "AUPR-OUT"])
+        df = df.set_index(pd.Index(range(1, len(losses) + 1)))
+        path = os.path.join(absolute_path, str(file_prefix) + "-e0-meanLossesPerEpoch.csv")
+        df.to_csv(path)

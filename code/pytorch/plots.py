@@ -119,5 +119,25 @@ def plot_all(metric="AUROC", all=True):
     plt.show()
 
 
+def plot_historun_across_epochs(filepath, metric="AUROC", starting_point=3):
+    df = pd.read_csv(filepath)
+    fig, ax1 = plt.subplots()
+
+    i = starting_point
+    ax1.plot([x + 1 for x in range(i, len(df[i:]) + i)], df["Mean Loss"][i:])
+
+    ax2 = ax1.twinx()
+
+    color = "tab:orange"
+    ax2.plot([x + 1 for x in range(0, len(df))], df["AUROC"], color=color)
+    color = "tab:green"
+    ax2.plot([x + 1 for x in range(0, len(df))], df["AUPR-IN"], color=color)
+    color = "tab:purple"
+    ax2.plot([x + 1 for x in range(0, len(df))], df["AUPR-OUT"], color=color)
+    plt.axvline(30, linestyle="--", color="black")
+    plt.show()
+
+
 if __name__ == "__main__":
-    plot_all("AUPR_OUT", False)
+    #plot_all("AUPR_OUT", False)
+    plot_historun_across_epochs("C:/Users/jonas/Desktop/programming/masterarbeit/code/pytorch/results/historun/myCAE/mnist/0/mnist-0-0.25-0.5-250-myCAE-e0-meanLossesPerEpoch.csv", "AUROC")
