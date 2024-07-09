@@ -29,20 +29,20 @@ ylim_dict = {False: {"AUROC": {"mnist": auroc_not_mnist,
                                   "cifar10": aupr_out_not_cifar,
                                   "cifar100": aupr_out_not_cifar}},
              True: {"AUROC": {"mnist": auroc_not_mnist,
-                               "fashion": auroc_not_mnist,
-                               "svhn": auroc_not_cifar,
-                               "cifar10": auroc_not_cifar,
-                               "cifar100": auroc_not_cifar},
-                     "AUPR_IN": {"mnist": aupr_in_not_mnist,
-                                 "fashion": aupr_in_not_mnist,
-                                 "svhn": aupr_in_not_cifar,
-                                 "cifar10": aupr_in_not_cifar,
-                                 "cifar100": aupr_in_not_cifar},
-                     "AUPR_OUT": {"mnist": aupr_out_not_mnist,
-                                  "fashion": aupr_out_not_mnist,
-                                  "svhn": aupr_out_not_cifar,
-                                  "cifar10": aupr_out_not_cifar,
-                                  "cifar100": aupr_out_not_cifar}}}
+                              "fashion": auroc_not_mnist,
+                              "svhn": auroc_not_cifar,
+                              "cifar10": auroc_not_cifar,
+                              "cifar100": auroc_not_cifar},
+                    "AUPR_IN": {"mnist": aupr_in_not_mnist,
+                                "fashion": aupr_in_not_mnist,
+                                "svhn": aupr_in_not_cifar,
+                                "cifar10": aupr_in_not_cifar,
+                                "cifar100": aupr_in_not_cifar},
+                    "AUPR_OUT": {"mnist": aupr_out_not_mnist,
+                                 "fashion": aupr_out_not_mnist,
+                                 "svhn": aupr_out_not_cifar,
+                                 "cifar10": aupr_out_not_cifar,
+                                 "cifar100": aupr_out_not_cifar}}}
 
 
 def plot_single(dataset, ax, metric="AUROC", all=True):
@@ -100,7 +100,6 @@ def plot_single(dataset, ax, metric="AUROC", all=True):
 
 def plot_all(metric="AUROC", all=True):
     plt.close('all')
-    fig = plt.figure()
 
     ax1 = plt.subplot2grid(shape=(2, 6), loc=(0, 1), colspan=2)
     ax2 = plt.subplot2grid((2, 6), (0, 3), colspan=2)
@@ -123,21 +122,31 @@ def plot_historun_across_epochs(filepath, metric="AUROC", starting_point=3):
     df = pd.read_csv(filepath)
     fig, ax1 = plt.subplots()
 
+    color = "tab:blue"
     i = starting_point
-    ax1.plot([x + 1 for x in range(i, len(df[i:]) + i)], df["Mean Loss"][i:])
+    ax1.set_ylabel('Trainings-Loss', color=color)
+    ax1.plot([x + 1 for x in range(i, len(df[i:]) + i)], df["Mean Loss"][i:], color=color)
+    ax1.tick_params(axis='y', labelcolor=color)
+    ax1.set_xlabel("Epoche")
 
     ax2 = ax1.twinx()
 
     color = "tab:orange"
-    ax2.plot([x + 1 for x in range(0, len(df))], df["AUROC"], color=color)
-    color = "tab:green"
+
+    ax2.plot([x + 1 for x in range(0, len(df))], df[metric], color=color)
+    ax2.set_ylabel('AUROC', color=color)
+    ax2.tick_params(axis='y', labelcolor=color)
+    ax2.set_ylim([0, 1])
+    """color = "tab:green"
     ax2.plot([x + 1 for x in range(0, len(df))], df["AUPR-IN"], color=color)
     color = "tab:purple"
-    ax2.plot([x + 1 for x in range(0, len(df))], df["AUPR-OUT"], color=color)
+    ax2.plot([x + 1 for x in range(0, len(df))], df["AUPR-OUT"], color=color)"""
     plt.axvline(30, linestyle="--", color="black")
+
+    plt.title(filepath.split("-")[5])
     plt.show()
 
 
 if __name__ == "__main__":
-    #plot_all("AUPR_OUT", False)
-    plot_historun_across_epochs("C:/Users/jonas/Desktop/programming/masterarbeit/code/pytorch/results/historun/myCAE/mnist/0/mnist-0-0.25-0.5-250-myCAE-e0-meanLossesPerEpoch.csv", "AUROC")
+    # plot_all("AUPR_OUT", False)
+    plot_historun_across_epochs("C:/Users/jonas/Desktop/programming/masterarbeit/code/pytorch/results/historun/CAE/mnist/0/mnist-0-0.25-0.5-250-CAE-e0-meanLossesPerEpoch.csv", "AUROC")

@@ -67,37 +67,69 @@ def train_cae_my(train_loader, model, criterion, optimizer, epochs, cop, device,
 
 
 def train_cae_single(train_loader, model, criterion, optimizer, epochs, device, histopath=''):
+    is_historun = len(histopath) > 0
+    if is_historun:
+        all_saved_losses = []
+
     for epoch in range(epochs):
+        if is_historun:
+            saved_losses = []
         for (batch, _) in train_loader:
             batch = batch.to(device)
             recon = model(batch)
             loss = criterion(batch, recon)
 
+            if is_historun:
+                saved_losses.append((float(loss), len(batch)))
+
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-        if len(histopath) > 0:
+        if is_historun:
+            all_saved_losses.append(saved_losses)
             torch.save(model.state_dict(), histopath + "-e" + str(epoch + 1) + ".pt")
         print(f'Epoch:{epoch+1}, Loss:{loss.item():.4f}')
-    return None
+
+    if is_historun:
+        return all_saved_losses
+    else:
+        return None
 
 
 def train_drae(trainloader, model, criterion, optimizer, epochs, device, histopath='', dataset="mnist"):
+    is_historun = len(histopath) > 0
+    if is_historun:
+        all_saved_losses = []
+
     model.train()
     losses = AverageMeter()
     for epoch in range(epochs):
+        if is_historun:
+            saved_losses = []
         for batch_id, (inputs, _) in enumerate(trainloader):
             inputs = torch.autograd.Variable(inputs.cuda())
             outputs = model(inputs)
             loss = criterion(inputs, outputs)
             losses.update(loss.item(), inputs.size(0))
 
+            if is_historun:
+                saved_losses.append((float(loss), len(inputs)))
+
             # compute gradient and do SGD step
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
+        if is_historun:
+            all_saved_losses.append(saved_losses)
+            torch.save(model.state_dict(), histopath + "-e" + str(epoch + 1) + ".pt")
+
         print(f'Epoch:{epoch+1}, Loss:{loss.item():.4f}')
+
+    if is_historun:
+        return all_saved_losses
+    else:
+        return None
 
 
 class DRAELossAutograd(nn.Module):
