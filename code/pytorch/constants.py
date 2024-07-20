@@ -1,8 +1,9 @@
 VALID_DATASETS = ["mnist", "fashion", "svhn", "cifar10", "cifar100"]
-VALID_ALGORITHMS = ["CAEDrop", "myCAE", "CAE", "DRAE", "DeepSVDD"]
+VALID_ALGORITHMS = ["myCAE", "CAE", "CAEDrop", "DRAE", "DeepSVDD"]
 ANOMALIE_PERCENTS = [0.25, 0.20, 0.15, 0.10, 0.05]
 
 DATASETS_IN_CHANNELS = {"mnist": 1, "fashion": 1, "cifar10": 3, "cifar100": 3, "svhn": 3}
+DASASETS_NUM_LABELS = {"mnist": 10, "fashion": 10, "cifar10": 10, "cifar100": 100, "svhn": 10}
 
 LABELS_MNIST = [i for i in range(0, 10)]
 LABELS_FASHION = [i for i in range(0, 10)]
