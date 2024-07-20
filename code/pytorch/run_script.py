@@ -1,3 +1,5 @@
+# Script which starts the run script for all configurations
+
 import os
 from constants import VALID_ALGORITHMS, VALID_DATASETS, ANOMALIE_PERCENTS
 

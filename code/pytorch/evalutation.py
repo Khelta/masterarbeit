@@ -1,3 +1,5 @@
+# Script to combine the results into different files
+
 import os
 import pandas as pd
 

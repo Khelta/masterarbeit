@@ -1,3 +1,5 @@
+# Script to plot the statistical test data
+
 import os
 import pandas as pd
 import numpy as np

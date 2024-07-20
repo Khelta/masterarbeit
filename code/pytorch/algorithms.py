@@ -1,3 +1,4 @@
+# Script for the training algorithms
 
 import torch
 import torch.nn as nn

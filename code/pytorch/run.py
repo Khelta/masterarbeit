@@ -1,3 +1,5 @@
+# Script which starts a single specified run
+
 import argparse
 import os
 

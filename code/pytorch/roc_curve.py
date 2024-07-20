@@ -1,3 +1,5 @@
+# Plots for the roc/pr-curves
+
 import argparse
 import matplotlib.pyplot as plt
 import os

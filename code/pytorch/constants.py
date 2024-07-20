@@ -1,3 +1,5 @@
+# Script for handeling constant values
+
 VALID_DATASETS = ["mnist", "fashion", "svhn", "cifar10", "cifar100"]
 VALID_ALGORITHMS = ["myCAE", "CAE", "CAEDrop", "DRAE", "DeepSVDD"]
 ANOMALIE_PERCENTS = [0.25, 0.20, 0.15, 0.10, 0.05]

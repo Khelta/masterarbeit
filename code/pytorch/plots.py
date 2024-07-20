@@ -1,3 +1,5 @@
+# Script for plotting the results, historuns and boxplots
+
 import matplotlib.pyplot as plt
 import os
 import pandas as pd

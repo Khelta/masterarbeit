@@ -1,3 +1,5 @@
+# Script to convert the combined results into a latex table
+
 import os
 import pandas as pd
 from copy import deepcopy

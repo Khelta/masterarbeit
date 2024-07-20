@@ -1,3 +1,5 @@
+# Script for checking the completeness of the results
+
 import os
 
 from constants import VALID_ALGORITHMS, VALID_DATASETS, ANOMALIE_PERCENTS, LABEL_DICT, CUT_OFF_PERCENTS

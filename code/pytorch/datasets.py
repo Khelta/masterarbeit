@@ -1,3 +1,5 @@
+# Script for handeling the datasets
+
 import numpy as np
 import os
 import torch
